@@ -1,4 +1,4 @@
-$fuel_settings = parseyaml($astute_settings_yaml)
+$fuel_settings = iser_storage_hook(parseyaml($astute_settings_yaml))
 
 $openstack_version = {
   'keystone'   => 'latest',

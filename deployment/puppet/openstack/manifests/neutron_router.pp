@@ -11,6 +11,7 @@ class openstack::neutron_router (
   $neutron                  = true,
   $neutron_config           = {},
   $neutron_network_node     = false,
+  $install_mellanox         = false,
   $neutron_server           = true,
   $use_syslog               = false,
   $syslog_log_facility      = 'LOG_LOCAL4',
@@ -32,28 +33,34 @@ class openstack::neutron_router (
       server_ha_mode       => $ha_mode,
     }
     #todo: add neutron::server here (into IF)
-    class { '::neutron::plugins::ovs':
-      neutron_config      => $neutron_config,
-      #bridge_mappings     => ["physnet1:br-ex","physnet2:br-prv"],
+    if $install_mellanox != true {
+      class { '::neutron::plugins::ovs':
+        neutron_config      => $neutron_config,
+        #bridge_mappings     => ["physnet1:br-ex","physnet2:br-prv"],
+      }
     }
-
+    notify{"neutron config ${neutron_config}":}
     if $neutron_network_node {
-      class { '::neutron::agents::ovs':
-        service_provider => $service_provider,
-        neutron_config   => $neutron_config,      }
-      # neutron metadata agent starts only under pacemaker
+      if $install_mellanox != true {
+       class { '::neutron::agents::ovs':
+         service_provider => $service_provider,
+         neutron_config   => $neutron_config,      }
+      }
+       class { '::neutron::agents::dhcp':
+         neutron_config   => $neutron_config,
+         verbose          => $verbose,
+         debug            => $debug,
+         service_provider => $service_provider,
+         install_mellanox => $install_mellanox,
+       }
+
+      ## neutron metadata agent starts only under pacemaker
       # and co-located with l3-agent
       class {'::neutron::agents::metadata':
         verbose          => $verbose,
         debug            => $debug,
         service_provider => $service_provider,
         neutron_config   => $neutron_config,
-      }
-      class { '::neutron::agents::dhcp':
-        neutron_config   => $neutron_config,
-        verbose          => $verbose,
-        debug            => $debug,
-        service_provider => $service_provider,
       }
       class { '::neutron::agents::l3':
         neutron_config   => $neutron_config,

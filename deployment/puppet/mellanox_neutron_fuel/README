@@ -1,0 +1,15 @@
+Mellanox_neutron
+
+This module contains classes, facts and templates in order to configure the mellanox neutron plugin on top of Openstack installation.
+Please look at tests/init.pp for usage instructions.
+This module configurations are based on the ethernet configurations in this wiki:
+https://wiki.openstack.org/wiki/Mellanox-Neutron-Havana-Redhat
+
+Contact
+-------
+support@mellanox.com
+
+Support
+-------
+support@mellanox.com
+

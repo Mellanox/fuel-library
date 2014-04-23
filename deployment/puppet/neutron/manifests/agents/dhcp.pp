@@ -8,6 +8,7 @@ class neutron::agents::dhcp (
   $dhcp_agent_manager='neutron.agent.dhcp_agent.DhcpAgentWithStateReport',
   $state_path       = '/var/lib/neutron',
   $service_provider = 'generic',
+  $install_mellanox = false,
 ) {
   include 'neutron::params'
 
@@ -143,34 +144,42 @@ class neutron::agents::dhcp (
       ,
     }
 
-    Cs_commit <| title == 'ovs' |> -> Cs_shadow <| title == 'dhcp' |>
     Cs_commit <| title == 'neutron-metadata-agent' |> -> Cs_shadow <| title == 'dhcp' |>
-
-    Cs_resource["p_${::neutron::params::dhcp_agent_service}"] -> Cs_colocation['dhcp-with-ovs']
-    Cs_resource["p_${::neutron::params::dhcp_agent_service}"] -> Cs_order['dhcp-after-ovs']
     Cs_resource["p_${::neutron::params::dhcp_agent_service}"] -> Cs_colocation['dhcp-with-metadata']
     Cs_resource["p_${::neutron::params::dhcp_agent_service}"] -> Cs_order['dhcp-after-metadata']
 
     cs_shadow { 'dhcp': cib => 'dhcp' }
     cs_commit { 'dhcp': cib => 'dhcp' }
 
-    Anchor <| title == 'neutron-ovs-agent-done' |> -> Anchor['neutron-dhcp-agent']
-    cs_colocation { 'dhcp-with-ovs':
-      ensure     => present,
-      cib        => 'dhcp',
-      primitives => [
-        "p_${::neutron::params::dhcp_agent_service}",
-        "clone_p_${::neutron::params::ovs_agent_service}"
-      ],
-      score      => 'INFINITY',
-    } ->
-    cs_order { 'dhcp-after-ovs':
-      ensure => present,
-      cib    => 'dhcp',
-      first  => "clone_p_${::neutron::params::ovs_agent_service}",
-      second => "p_${::neutron::params::dhcp_agent_service}",
-      score  => 'INFINITY',
-    } -> Service['neutron-dhcp-service']
+    if !$install_mellanox{
+      Cs_commit <| title == 'ovs' |> -> Cs_shadow <| title == 'dhcp' |>
+      Cs_resource["p_${::neutron::params::dhcp_agent_service}"] -> Cs_colocation['dhcp-with-ovs']
+      Cs_resource["p_${::neutron::params::dhcp_agent_service}"] -> Cs_order['dhcp-after-ovs']
+
+      Anchor <| title == 'neutron-ovs-agent-done' |> -> Anchor['neutron-dhcp-agent']
+
+      cs_colocation { 'dhcp-with-ovs':
+        ensure     => present,
+        cib        => 'dhcp',
+        primitives => [
+          "p_${::neutron::params::dhcp_agent_service}",
+          "clone_p_${::neutron::params::ovs_agent_service}"
+        ],
+        score      => 'INFINITY',
+      } ->
+      cs_order { 'dhcp-after-ovs':
+        ensure => present,
+        cib    => 'dhcp',
+        first  => "clone_p_${::neutron::params::ovs_agent_service}",
+        second => "p_${::neutron::params::dhcp_agent_service}",
+        score  => 'INFINITY',
+      } -> Service['neutron-dhcp-service']
+
+      $dhcp_service_requirements = [Package[$dhcp_agent_package], Class['neutron']]
+
+    }else{
+      $dhcp_service_requirements = [Package[$dhcp_agent_package], Class['neutron'], Service['neutron-ovs-agent']]
+    }
 
     Anchor <| title == 'neutron-metadata-agent-done' |> -> Anchor['neutron-dhcp-agent']
     cs_colocation { 'dhcp-with-metadata':
@@ -210,7 +219,7 @@ class neutron::agents::dhcp (
       hasstatus  => true,
       hasrestart => false,
       provider   => $service_provider,
-      require    => [Package[$dhcp_agent_package], Class['neutron'], Service['neutron-ovs-agent']],
+      require    => $dhcp_service_requirements,
     }
 
   } else {
@@ -224,7 +233,7 @@ class neutron::agents::dhcp (
       hasstatus  => true,
       hasrestart => true,
       provider   => $::neutron::params::service_provider,
-      require    => [Package[$dhcp_agent_package], Class['neutron'], Service['neutron-ovs-agent']],
+      require    => $dhcp_service_requirements,
     }
   }
   Class[neutron::waistline] -> Service[neutron-dhcp-service]

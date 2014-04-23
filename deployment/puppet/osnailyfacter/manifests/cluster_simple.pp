@@ -57,6 +57,9 @@ class osnailyfacter::cluster_simple {
     }
   }
 
+  if $::fuel_settings['storage']['ISER']{
+    $install_iser=true
+  }
 
   $storage_hash         = $::fuel_settings['storage']
   $nova_hash            = $::fuel_settings['nova']
@@ -79,6 +82,17 @@ class osnailyfacter::cluster_simple {
   $controller_node_address = $controller[0]['internal_address']
   $controller_node_public = $controller[0]['public_address']
 
+  if $::fuel_settings['neutron-mellanox']['enabled'] != 'disabled' {
+    $install_mellanox=true
+    $cinder = filter_nodes($::fuel_settings['nodes'],'role','cinder')
+    $iser_ip_address=$cinder[0]['storage_address']
+    $controller_inband_IP=$controller_node_address
+    $mlnx_neutron_root_password=$::fuel_settings['quantum_settings']['database']['passwd']
+    $vlan_range = split($::fuel_settings['quantum_settings']['L2']['phys_nets']['physnet2']['vlan_range'], ':')
+    $min_vlan=$vlan_range[0]
+    $max_vlan=$vlan_range[1]
+    $quantum_config['install_mellanox']=true
+  }
 
   # AMQP client configuration
   $amqp_port = '5672'
@@ -235,6 +249,7 @@ class osnailyfacter::cluster_simple {
           # qpid_nodes            => [$controller_node_address],
           neutron_config          => $quantum_config,
           neutron_network_node    => true,
+          install_mellanox        => $install_mellanox,
           use_syslog            => $use_syslog,
           syslog_log_level      => $syslog_log_level,
           syslog_log_facility   => $syslog_log_facility_neutron,
@@ -349,6 +364,11 @@ class osnailyfacter::cluster_simple {
 
       }
 
+      if $install_mellanox == true {
+        include mellanox_neutron_fuel::controller
+        include mellanox_neutron_fuel::network_node
+        include mellanox_neutron_fuel::neutron_server
+      }
       #ADDONS END
 
     }
@@ -400,6 +420,7 @@ class osnailyfacter::cluster_simple {
         syslog_log_facility_cinder  => $syslog_log_facility_cinder,
         state_path             => $nova_hash[state_path],
         nova_rate_limits       => $nova_rate_limits,
+        install_mellanox       => $install_mellanox,
         cinder_rate_limits     => $cinder_rate_limits
       }
       nova_config { 'DEFAULT/start_guests_on_host_boot': value => $::fuel_settings['start_guests_on_host_boot'] }
@@ -408,6 +429,10 @@ class osnailyfacter::cluster_simple {
 
       if ($::use_ceph){
         Class['openstack::compute'] -> Class['ceph']
+      }
+
+      if $install_mellanox == true {
+        include mellanox_neutron_fuel::compute_node
       }
     } # COMPUTE ENDS
 
@@ -441,6 +466,10 @@ class osnailyfacter::cluster_simple {
         debug                => $debug,
         verbose              => $verbose,
         use_syslog           => $use_syslog,
+      }
+
+      if $install_iser == true {
+        include mellanox_neutron_fuel::cinder_node
       }
     } #CINDER ENDS
 

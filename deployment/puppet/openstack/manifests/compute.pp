@@ -123,6 +123,7 @@ class openstack::compute (
   $state_path                    = '/var/lib/nova',
   $ceilometer                    = false,
   $ceilometer_metering_secret    = "ceilometer",
+  $install_mellanox              = false,
 ) {
 
   #
@@ -331,17 +332,19 @@ class openstack::compute (
       syslog_log_facility  => $syslog_log_facility_neutron,
     }
 
-    #todo: Quantum plugin and database connection not need on compute.
-    class { 'neutron::plugins::ovs':
-      neutron_config  => $quantum_config
-    }
+    if $install_mellanox != true {
+      #todo: Quantum plugin and database connection not need on compute.
+      class { 'neutron::plugins::ovs':
+        neutron_config  => $quantum_config
+      }
 
-    class { 'neutron::agents::ovs':
-      neutron_config   => $quantum_config,
-      # bridge_uplinks   => ["br-prv:${private_interface}"],
-      # bridge_mappings  => ['physnet2:br-prv'],
-      # enable_tunneling => $enable_tunneling,
-      # local_ip         => $internal_address,
+      class { 'neutron::agents::ovs':
+        neutron_config   => $quantum_config,
+        # bridge_uplinks   => ["br-prv:${private_interface}"],
+        # bridge_mappings  => ['physnet2:br-prv'],
+        # enable_tunneling => $enable_tunneling,
+        # local_ip         => $internal_address,
+      }
     }
 
 

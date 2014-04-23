@@ -433,7 +433,7 @@ class PManager(object):
         if devs:
             self.kick("bootloader --location=mbr --driveorder={0} "
                       "--append=' console=ttyS0,9600 console=tty0 "
-                      "biosdevname=0 "
+                      "biosdevname=0 intel_iommu=on"
                       "crashkernel=none'".format(",".join(devs)))
             for dev in devs:
                 self.post("echo -n > /tmp/grub.script")

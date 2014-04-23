@@ -130,14 +130,6 @@ yum-utils
 perl
 daemonize
 rsync
-# OFED required
-tcl
-tk
-gcc-gfortran
-libnl-devel
-bc
-libxml2-python
-tcsh
 
 # COBBLER EMBEDDED SNIPPET: 'puppet_install_if_enabled'
 # LISTS puppet PACKAGE IF puppet_auto_setup VARIABLE IS SET TO 1
@@ -266,18 +258,6 @@ $SNIPPET('centos_blacklist_i2c_piix4')
 
 wget -O /etc/rsyslog.d/20-puppet_stdout.conf "http://$server/cobbler/aux/20-puppet_stdout_syslog.conf"
 wget -O /etc/rsyslog.d/20-puppet_error.conf "http://$server/cobbler/aux/20-puppet_error_syslog.conf"
-
-# Install OFED drivers
-wget "http://$server:8080/MLNX_OFED_LINUX-2.1-1.0.0-rhel6.4-x86_64.tgz" -O /tmp/OFED.tar.gz && \
-tar xf /tmp/OFED.tar.gz -C /tmp && \
-/tmp/MLNX_OFED_LINUX-2.1-1.0.0-rhel6.4-x86_64/mlnxofedinstall -q
-
-wget "http://$server:8080/fw-2.30.8000_32vf.bin" -O /tmp/fw-2.30.8000_32vf.bin && \
-yes | mstflint -d \$(lspci | grep -i mell | grep -v "Virtual" | cut -d " " -f 1) -i /tmp/fw-2.30.8000_32vf.bin b
-
-cat > /etc/modprobe.d/mlx4_core.conf << EOF
-options mlx4_core port_type_array=2,2 num_vfs=16 enable_64b_cqe_eqe=0 log_num_mgm_entry_size=-1
-EOF
 
 # COBBLER EMBEDDED SNIPPET: 'kickstart_done'
 # DISABLES PXE BOOTING
