@@ -17,6 +17,5 @@ MLX4_CORE_OPT="$MLX4_CORE_OPT num_vfs=$VF_NUM enable_64b_cqe_eqe=0 log_num_mgm_e
 MLX4_CORE_OPT="$MLX4_CORE_OPT probe_vf=1"
 #end if
 
-touch /etc/modprobe.d/mlx4_core.conf
-echo "$MLX4_CORE_OPT" >> /etc/modprobe.d/mlx4_core.conf
+echo "$MLX4_CORE_OPT" > /etc/modprobe.d/mlx4_core.conf
 #end if

@@ -132,13 +132,9 @@ perl
 daemonize
 rsync
 
-# OFED required
-bc
-libxml2-python
-libnl
-tk
-tcl
-mlnx-ofed-light
+# COBBLER EMBEDDED SNIPPET: 'centos_ofed_prereq_pkgs_if_enabled'
+# LISTS ofed prereq PACKAGES IF mlnx_plugin_mode VARIABLE IS SET TO enabled
+$SNIPPET('centos_ofed_prereq_pkgs_if_enabled')
 
 # COBBLER EMBEDDED SNIPPET: 'puppet_install_if_enabled'
 # LISTS puppet PACKAGE IF puppet_auto_setup VARIABLE IS SET TO 1
