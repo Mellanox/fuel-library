@@ -90,6 +90,7 @@ class openstack::controller_ha (
    $max_retries                    = '-1',
    $nova_report_interval           = '10',
    $nova_service_down_time         = '60',
+   $dhcp_driver
  ) {
 
     class { '::openstack::ha::haproxy':
@@ -224,7 +225,8 @@ class openstack::controller_ha (
         use_syslog            => $use_syslog,
         syslog_log_facility   => $syslog_log_facility_neutron,
         ha_mode               => $ha_mode,
-        primary_controller    => $primary_controller
+        primary_controller    => $primary_controller,
+        dhcp_driver           => $dhcp_driver,
       }
     }
 

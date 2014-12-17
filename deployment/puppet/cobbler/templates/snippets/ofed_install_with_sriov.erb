@@ -1,5 +1,6 @@
 #set $mlnx_mode=$getVar('mlnx_plugin_mode','disabled')
 #set $iser_enabled=$getVar('mlnx_iser_enabled','false')
+#set $port_type=$getVar('mlnx_port_type','2')
 
 #if $mlnx_mode != "disabled" or $iser_enabled == 'true'
 
@@ -11,14 +12,14 @@ $ofed_install_cmd
 in-target $ofed_install_cmd && \
 #end if
 
-#set $mlnx_opt = "options mlx4_core port_type_array=2,2"
+#set $mlnx_opt = "options mlx4_core port_type_array=%s,%s" % ($port_type,$port_type)
 
 #if $mlnx_mode in ("ethernet") or $iser_enabled == 'true'
 #set $vf_num = $getVar('mlnx_vf_num','1')
 #set $mlnx_opt += " num_vfs=%s enable_64b_cqe_eqe=0 log_num_mgm_entry_size=-1" % ($vf_num)
 #end if
 
-#if $iser_enabled == 'true'
+#if $iser_enabled == 'true' and $port_type == '2'
 #set $mlnx_opt += " probe_vf=1"
 #end if
 
@@ -29,4 +30,9 @@ in-target $ofed_install_cmd && \
 #set $mlnx_option_cmd="echo -e \"%s\" > %s" % ($mlnx_opt, $mlnx4_core_file)
 $mlnx_option_cmd
 
+#if $port_type == '1'
+#set $mlnx_eipoib_load="sed -i s/^E_IPOIB_LOAD.*$/E_IPOIB_LOAD=yes/g /etc/infiniband/openib.conf"
+$mlnx_eipoib_load
+#end if
+#
 #end if

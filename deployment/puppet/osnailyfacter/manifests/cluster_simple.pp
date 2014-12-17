@@ -66,6 +66,10 @@ class osnailyfacter::cluster_simple {
   if $::fuel_settings['role'] == 'controller' {
     if ($::mellanox_mode == 'ethernet') {
       $test_vm_pkg = 'cirros-testvm-mellanox'
+      package { 'mellanox-testvm' :
+        ensure => 'installed',
+        name   => 'mellanox-testvm',
+      }
     } else {
       $test_vm_pkg = 'cirros-testvm'
     }
@@ -165,6 +169,9 @@ class osnailyfacter::cluster_simple {
 
   if ($::mellanox_mode != 'disabled') {
     class { 'mellanox_openstack::openibd' : }
+    $dhcp_driver = 'mlnx_dhcp.MlnxDnsmasq'
+  }else{
+    $dhcp_driver = 'neutron.agent.linux.dhcp.Dnsmasq'
   }
 
 
@@ -265,6 +272,7 @@ class osnailyfacter::cluster_simple {
           neutron_network_node  => true,
           use_syslog            => $use_syslog,
           syslog_log_facility   => $::syslog_log_facility_neutron,
+          dhcp_driver           => $dhcp_driver,
         }
       }
 

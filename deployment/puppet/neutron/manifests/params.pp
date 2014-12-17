@@ -28,6 +28,7 @@ class neutron::params {
     $dhcp_agent_service = 'neutron-dhcp-agent'
 
     $dnsmasq_packages   = ['dnsmasq', 'dnsmasq-utils']
+    $mlnx_dnsmasq_packages   = ['dnsmasq', 'dnsmasq-utils','mlnx-dnsmasq']
 
     $lbaas_agent_package = false
     $lbaas_agent_service = 'neutron-lbaas-agent'

@@ -16,6 +16,7 @@ stage {'zero': } ->
 stage {'first': } ->
 stage {'openstack-custom-repo': } ->
 stage {'netconfig': } ->
+stage {'net-daemons': } ->
 stage {'corosync_setup': } ->
 stage {'openstack-firewall': } -> Stage['main']
 
@@ -156,11 +157,27 @@ case $::operatingsystem {
 }
 
 class os_common {
-  if ($::fuel_settings['neutron_mellanox']) and ($::fuel_settings['storage']['iser']) {
-      class { 'mellanox_openstack::iser_rename':
+  if ($::fuel_settings['neutron_mellanox']) {
+      if ($::fuel_settings['neutron_mellanox']['driver'] == 'eth_ipoib') {
+          $ib_mode=true
+          class { 'mellanox_openstack::ipoibd':
+               stage => 'net-daemons',
+          }
+      }
+      if ($::fuel_settings['storage']['iser']) {
+          if ($ib_mode) {
+              class { 'mellanox_openstack::iser_child':
+                   stage => 'zero',
+                   storage_parent => $::fuel_settings['neutron_mellanox']['storage_parent_drivers']['bus_info'],
+                   iser_pkey => $::fuel_settings['neutron_mellanox']['storage_parent_drivers']['pkey'],
+              }
+          }else{
+              class { 'mellanox_openstack::iser_rename':
                    stage => 'zero',
                    storage_parent => $::fuel_settings['neutron_mellanox']['storage_parent'],
                    iser_interface_name => $::fuel_settings['neutron_mellanox']['iser_interface_name'],
+              }
+          }
       }
   }
   class {"l23network::hosts_file": stage => 'netconfig', nodes => $nodes_hash }
