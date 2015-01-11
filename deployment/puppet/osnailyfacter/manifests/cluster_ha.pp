@@ -72,10 +72,6 @@ class osnailyfacter::cluster_ha {
   if $primary_controller {
     if ($::mellanox_mode == 'ethernet') {
       $test_vm_pkg = 'cirros-testvm-mellanox'
-      package { 'mellanox-testvm' :
-        ensure => 'installed',
-        name   => 'mellanox-testvm',
-      }
     } else {
       $test_vm_pkg = 'cirros-testvm'
     }
