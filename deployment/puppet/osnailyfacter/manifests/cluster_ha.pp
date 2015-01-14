@@ -269,9 +269,17 @@ class osnailyfacter::cluster_ha {
   $mirror_type = 'external'
   Exec { logoutput => true }
 
+  if ($::mellanox_mode != 'disabled') {
+    class { 'mellanox_openstack::openibd' : }
+    $dhcp_driver = 'mlnx_dhcp.MlnxDnsmasq'
+  }else{
+    $dhcp_driver = 'neutron.agent.linux.dhcp.Dnsmasq'
+  }
+
   class compact_controller (
     $primary_controller,
-    $quantum_network_node = $quantum_netnode_on_cnt
+    $quantum_network_node = $quantum_netnode_on_cnt,
+    $dhcp_driver
 
   ) {
 
@@ -363,6 +371,7 @@ class osnailyfacter::cluster_ha {
       idle_timeout                   => $idle_timeout,
       nova_report_interval           => $::nova_report_interval,
       nova_service_down_time         => $::nova_service_down_time,
+      dhcp_driver                    => $dhcp_driver,
     }
   }
 
@@ -371,11 +380,6 @@ class osnailyfacter::cluster_ha {
       vips => $::osnailyfacter::cluster_ha::vips,
     }
   }
-
-  if ($::mellanox_mode != 'disabled') {
-    class { 'mellanox_openstack::openibd' : }
-  }
-
 
 
   case $::fuel_settings['role'] {
@@ -399,7 +403,8 @@ class osnailyfacter::cluster_ha {
       }
 
       class { 'compact_controller':
-        primary_controller => $primary_controller
+        primary_controller => $primary_controller,
+        dhcp_driver => $dhcp_driver,
       }
 
       if ($use_swift) {

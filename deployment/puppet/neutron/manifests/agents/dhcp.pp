@@ -48,6 +48,11 @@ class neutron::agents::dhcp (
   Service<| title=='neutron-server' |> -> Anchor['neutron-dhcp-agent']
 
   case $dhcp_driver {
+    /\.MlnxDnsmasq/: {
+      package { $::neutron::params::mlnx_dnsmasq_packages: ensure => present, }
+      Package[$::neutron::params::mlnx_dnsmasq_packages] -> Package[$dhcp_agent_package]
+      $dhcp_server_packages = $::neutron::params::mlnx_dnsmasq_packages
+    }
     /\.Dnsmasq/ : {
       package { $::neutron::params::dnsmasq_packages: ensure => present, }
       Package[$::neutron::params::dnsmasq_packages] -> Package[$dhcp_agent_package]

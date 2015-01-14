@@ -15,7 +15,8 @@ class openstack::neutron_router (
   $syslog_log_facility      = 'LOG_LOCAL4',
   $ha_mode                  = false,
   $primary_controller       = false,
-  $service_provider         = 'generic'
+  $service_provider         = 'generic',
+  $dhcp_driver              = 'neutron.agent.linux.dhcp.Dnsmasq',
 ) {
     class { '::neutron':
       neutron_config       => $neutron_config,
@@ -65,7 +66,8 @@ class openstack::neutron_router (
         verbose            => $verbose,
         debug              => $debug,
         service_provider   => $service_provider,
-        primary_controller => $primary_controller
+        primary_controller => $primary_controller,
+        dhcp_driver        => $dhcp_driver,
       }
       class { '::neutron::agents::l3':
         neutron_config     => $neutron_config,
